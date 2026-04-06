@@ -150,10 +150,11 @@ class FISTA:
 
         for lmbda in self.lambdas:
             beta_current = self.betas.copy()
+            y_current = beta_current.copy() if self.start_point is None else self.start_point.copy()
             mu = self.start_momentum
             for iter in range(self.max_iter):
-                gradient = self._compute_gradient(X, y, beta_current)
-                beta_intermediate = beta_current - self.lr * gradient
+                gradient = self._compute_gradient(X, y, y_current)
+                beta_intermediate = y_current - self.lr * gradient
                 beta_next = self._soft_thresholding(beta_intermediate, self.lr * lmbda)
 
                 mu_next = (1 + np.sqrt(1 + 4 * mu ** 2)) / 2
@@ -164,6 +165,7 @@ class FISTA:
                     break
 
                 beta_current = beta_next
+                y_current = y_next
                 mu = mu_next
 
             self.coef_path.append(beta_current.copy())
