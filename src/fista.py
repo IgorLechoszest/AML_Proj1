@@ -142,8 +142,34 @@ class FISTA:
         """
         if self.is_fitted:
             logger.warning("Model is already fitted. Re-fitting will overwrite previous results.")
+
+        n_features = X.shape[1]
+        self.classes = np.unique(y) 
+        self.betas = np.zeros(n_features) if self.betas_start is None else self.betas_start.copy()  
+        self.coef_path = []
+
         for lmbda in self.lambdas:
-            pass #TODO: Implement the FISTA optimization loop for each lambda in the regularization path.
+            beta_current = self.betas.copy()
+            mu = self.start_momentum
+            for iter in range(self.max_iter):
+                gradient = self._compute_gradient(X, y, beta_current)
+                beta_intermediate = beta_current - self.lr * gradient
+                beta_next = self._soft_thresholding(beta_intermediate, self.lr * lmbda)
+
+                mu_next = (1 + np.sqrt(1 + 4 * mu ** 2)) / 2
+                y_next = beta_next + (mu - 1) / mu_next * (beta_next - beta_current)
+
+                if np.linalg.norm(beta_next - beta_current) < self.tol:
+                    logger.info(f"Convergence reached at iteration {iter} for lambda={lmbda}. Stopping early.")
+                    break
+
+                beta_current = beta_next
+                mu = mu_next
+
+            self.coef_path.append(beta_current.copy())
+            
+        self.coef_path = np.array(self.coef_path)
+        self.betas = self.coef_path[0]  # Default to the first lambda's coefficients, will be updated after validation 
         self.is_fitted = True
         return self
 
