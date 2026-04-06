@@ -191,7 +191,8 @@ class FISTA:
         """
         if not self.is_fitted:
             raise ValueError("Model is not fitted. Call fit() before predict_proba().")
-        pass #TODO
+        probas = sigmoid(X @ self.betas)
+        return np.column_stack((1 - probas, probas))
 
     def predict(self, X) -> np.ndarray:
         """
@@ -207,7 +208,8 @@ class FISTA:
         """
         if not self.is_fitted:
             raise ValueError("Model is not fitted. Call fit() before predict().")
-        pass #TODO
+        probas = self.predict_proba(X)[:, 1]
+        return (probas >= 0.5).astype(int)
     def validate(self, X_valid, y_valid, measure='f1') -> float:
         """
         Evaluates the model on validation data across all lambdas and selects the best one.
