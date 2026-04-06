@@ -262,7 +262,7 @@ class FISTA:
 
     def plot_coefficients(self) -> None:
         """Plots the coefficient paths as a function of lambda."""
-        if not self.coef_path:
+        if len(self.coef_path) == 0:
             raise ValueError("Model is not fitted. Call fit() before plot_coefficients().")
         plt.figure(figsize=(10, 6))
         for i in range(self.coef_path.shape[1]):
