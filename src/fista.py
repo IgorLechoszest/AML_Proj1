@@ -98,7 +98,7 @@ class FISTA:
         Returns:
         Updated coefficient vector after applying soft-thresholding.
         """
-        pass #TODO
+        return np.sign(betas) * np.maximum(0, np.abs(betas) - threshold)
 
     def _compute_gradient(self, X, y, beta_current) -> np.ndarray:
         """
@@ -114,7 +114,10 @@ class FISTA:
         Returns:
         Gradient vector of shape (n_features,).
         """
-        pass #TODO
+        n = X.shape[0]
+        predictions = sigmoid(X @ beta_current)
+        grad = (1 / n) * X.T @ (predictions - y)
+        return grad
 
     def fit(self, X, y) -> "FISTA":
         """
