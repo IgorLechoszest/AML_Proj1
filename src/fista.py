@@ -9,8 +9,8 @@ class FISTA:
     feature selection.
     
     Parameters:
-    lambda_val : float, default=0.1
-        Regularization strength (L1 penalty). Higher values lead to more coefficients being exactly zero.
+    lambdas : array-like, default=None
+        List of lambda values for the regularization path. If None, a default range (25 values between 0.0001 and 10) will be used.
     lr : float, default=0.01
         Learning rate (step size) for the gradient descent step.
     max_iter : int, default=1000
@@ -25,20 +25,33 @@ class FISTA:
         Starting value for the momentum. Typically set to 1.0.
         
     Attributes:
+    coef_path : list of ndarray
+        List of coefficient vectors for each lambda in the regularization path.
+    val_scores : list of float
+        List of validation scores corresponding to each lambda in the regularization path.
+    best_lambda : float
+        The lambda value that achieved the best validation score.        
     betas : ndarray of shape (n_features,)
         Vector of weights learned by the model after fitting.
     classes : ndarray of shape (n_classes,)
         A list of class labels.
     """
 
-    def __init__(self, lambda_val=0.1, lr=0.01, max_iter=1000, tol=1e-4, betas_start=None, start_point=None, start_momentum=1.0):
-        self.lambda_val = lambda_val
+    def __init__(self, lambdas=None, lr=0.01, max_iter=1000, tol=1e-4, betas_start=None, start_point=None, start_momentum=1.0):
         self.lr = lr
         self.max_iter = max_iter
         self.tol = tol
         self.betas_start = betas_start
         self.start_point = start_point
         self.start_momentum = start_momentum
+        if lambdas is None:
+            self.lambdas = np.logspace(-4, 1, 25)
+        else:
+            self.lambdas = np.array(lambdas)
+
+        self.coef_path = []
+        self.val_scores = []
+        self.best_lambda = None
 
         self.betas = None
         self.classes = None
@@ -95,7 +108,9 @@ class FISTA:
         Returns:
         Fitted estimator.
         """
-        pass #TODO
+        for lmbda in self.lambdas:
+            pass #TODO: Implement the FISTA optimization loop for each lambda in the regularization path.
+        return self
 
     def predict_proba(self, X) -> np.ndarray:
         """
