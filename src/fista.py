@@ -216,7 +216,7 @@ class FISTA:
 
     def plot(self, measure) -> None:
         """Plots the evaluation measure against lambda values."""
-        if not self.is_fitted:
+        if not self.val_scores:
             raise ValueError("Model is not fitted. Call fit() and validate() before plot().")
         plt.figure(figsize=(8, 5))
         plt.plot(self.lambdas, self.val_scores, marker='o')
@@ -229,7 +229,7 @@ class FISTA:
 
     def plot_coefficients(self) -> None:
         """Plots the coefficient paths as a function of lambda."""
-        if not self.is_fitted:
+        if not self.coef_path:
             raise ValueError("Model is not fitted. Call fit() before plot_coefficients().")
         plt.figure(figsize=(10, 6))
         for i in range(self.coef_path.shape[1]):
