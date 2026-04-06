@@ -1,5 +1,32 @@
 import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.metrics import (
+    recall_score, 
+    precision_score, 
+    f1_score, 
+    balanced_accuracy_score, 
+    roc_auc_score, 
+    average_precision_score
+)
+import logging
+logger = logging.getLogger(__name__)
 
+def sigmoid(z: np.ndarray) -> np.ndarray:
+    """
+    Numerically stable sigmoid function for arrays.
+    exp(-z) can overflow for z<0 and exp(z) can overflow for z>0 so we handle positive and negative cases separately.
+    """
+    res = np.zeros_like(z, dtype=float)
+
+    pos_mask = z >= 0
+    neg_mask = ~pos_mask
+
+    res[pos_mask] = 1.0 / (1.0 + np.exp(-z[pos_mask]))
+
+    exp_z_neg = np.exp(z[neg_mask])
+    res[neg_mask] = exp_z_neg / (1.0 + exp_z_neg)
+    
+    return res
 class FISTA:
     """
     Logistic Regression classifier with L1 penalty (Lasso) optimized using FISTA.
@@ -35,6 +62,8 @@ class FISTA:
         Vector of weights learned by the model after fitting.
     classes : ndarray of shape (n_classes,)
         A list of class labels.
+    is_fitted : bool
+        Indicates whether the model has been fitted.    
     """
 
     def __init__(self, lambdas=None, lr=0.01, max_iter=1000, tol=1e-4, betas_start=None, start_point=None, start_momentum=1.0):
@@ -55,7 +84,7 @@ class FISTA:
 
         self.betas = None
         self.classes = None
-
+        self.is_fitted = False
     def _soft_thresholding(self, betas, threshold) -> np.ndarray:
         """
         Soft-thresholding operator for L1 regularization. Allows for L1 penalty to set coefficients to zero, enabling feature selection.
@@ -108,8 +137,11 @@ class FISTA:
         Returns:
         Fitted estimator.
         """
+        if self.is_fitted:
+            logger.warning("Model is already fitted. Re-fitting will overwrite previous results.")
         for lmbda in self.lambdas:
             pass #TODO: Implement the FISTA optimization loop for each lambda in the regularization path.
+        self.is_fitted = True
         return self
 
     def predict_proba(self, X) -> np.ndarray:
@@ -128,6 +160,8 @@ class FISTA:
             Returns the probability of the sample for each class in the model,
             where classes are ordered as they are in self.classes.
         """
+        if not self.is_fitted:
+            raise ValueError("Model is not fitted. Call fit() before predict_proba().")
         pass #TODO
 
     def predict(self, X) -> np.ndarray:
@@ -142,4 +176,67 @@ class FISTA:
         C : ndarray of shape (n_samples,)
             Vector of predicted class labels per sample (0 or 1).
         """
+        if not self.is_fitted:
+            raise ValueError("Model is not fitted. Call fit() before predict().")
         pass #TODO
+    def validate(self, X_valid, y_valid, measure='f1') -> float:
+        """
+        Evaluates the model on validation data across all lambdas and selects the best one.
+        """
+        self.val_scores = []
+        if not self.is_fitted:
+            raise ValueError("Model is not fitted. Call fit() before validate().")
+        
+        for beta in self.coef_path:
+            self.betas = beta
+            y_proba = self.predict_proba(X_valid)[:, 1]
+            y_pred = self.predict(X_valid)
+            
+            if measure == 'recall':
+                score = recall_score(y_valid, y_pred)
+            elif measure == 'precision':
+                score = precision_score(y_valid, y_pred)
+            elif measure == 'f1':
+                score = f1_score(y_valid, y_pred)
+            elif measure == 'balanced_accuracy':
+                score = balanced_accuracy_score(y_valid, y_pred)
+            elif measure == 'roc_auc':
+                score = roc_auc_score(y_valid, y_proba)
+            elif measure == 'pr_auc':
+                score = average_precision_score(y_valid, y_proba)
+            else:
+                raise ValueError(f"Unknown measure: {measure}")
+                
+            self.val_scores.append(score)
+
+        best_idx = np.argmax(self.val_scores)
+        self.best_lambda = self.lambdas[best_idx]
+        self.betas = self.coef_path[best_idx]
+        return self.best_lambda
+
+    def plot(self, measure) -> None:
+        """Plots the evaluation measure against lambda values."""
+        if not self.is_fitted:
+            raise ValueError("Model is not fitted. Call fit() and validate() before plot().")
+        plt.figure(figsize=(8, 5))
+        plt.plot(self.lambdas, self.val_scores, marker='o')
+        plt.xscale('log')
+        plt.xlabel('Lambda')
+        plt.ylabel(measure)
+        plt.title(f'{measure} vs Lambda')
+        plt.grid(True)
+        plt.show()
+
+    def plot_coefficients(self) -> None:
+        """Plots the coefficient paths as a function of lambda."""
+        if not self.is_fitted:
+            raise ValueError("Model is not fitted. Call fit() before plot_coefficients().")
+        plt.figure(figsize=(10, 6))
+        for i in range(self.coef_path.shape[1]):
+            plt.plot(self.lambdas, self.coef_path[:, i])
+        plt.xscale('log')
+        plt.xlabel('Lambda')
+        plt.ylabel('Coefficient values')
+        plt.title('Coefficient Paths (with L1 Regularization)')
+        plt.grid(True)
+        plt.show()
