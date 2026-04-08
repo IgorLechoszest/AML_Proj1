@@ -91,9 +91,64 @@ class UnlabeledLogReg:
         
         return self
 
-    def _em_algorithm(self, X, y_obs) -> "UnlabeledLogReg":
-        # TODO
-        raise NotImplementedError("EM algorithm is not yet implemented.")
+    def _em_algorithm(self, X, y_obs, max_em_iter=15, tol=1e-3) -> "UnlabeledLogReg":
+        """
+        Implements the Expectation-Maximization (EM) algorithm for soft-labeling.
+        
+        Algorithm steps:
+        1. Split the dataset into labeled (y != -1) and unlabeled (y == -1) subsets.
+        2. Fit the base FISTA model exclusively on the labeled subset.
+        3. Loop until convergence or max_em_iter:
+           a. Predict soft probabilities for the unlabeled subset using the current model.
+           b. Impute the missing values in the target vector with these probabilities.
+           c. Refit the FISTA model on the completely labeled (augmented) dataset using 
+              previous weights as a warm start.
+        
+        Parameters:
+        X : ndarray of shape (n_samples, n_features)
+            Training feature vectors.
+        y_obs : ndarray of shape (n_samples,)
+            Target vector with missing labels denoted as -1.
+        max_em_iter : int, default=15
+            Maximum number of iterations for the EM loop.
+        tol : float, default=1e-3
+            Tolerance for the convergence criteria based on coefficient changes.
+            
+        Returns:
+        self : UnlabeledLogReg
+            The fitted class instance.
+        """
+        labeled_mask = (y_obs != -1)
+        
+        X_labeled = X[labeled_mask]
+        y_labeled = y_obs[labeled_mask]
+        X_unlabeled = X[~labeled_mask]
+        
+        if len(X_unlabeled) == 0:
+            logger.warning("No unlabeled samples found. Performing standard training.")
+            self.model.fit(X, y_obs)
+            return self
+
+        self.model.fit(X_labeled, y_labeled)
+        
+        y_complete = y_obs.copy().astype(float)
+        
+        for em_iter in range(max_em_iter):
+            old_betas = self.model.betas.copy()
+            
+            probas = self.model.predict_proba(X_unlabeled)[:, 1]
+            y_complete[~labeled_mask] = probas
+            
+            self.model.is_fitted = False
+            self.model.betas_start = old_betas
+            self.model.fit(X, y_complete)
+            
+            diff = np.linalg.norm(self.model.betas - old_betas)
+            if diff < tol:
+                logger.info(f"EM converged at iteration {em_iter + 1}.")
+                break
+                
+        return self
 
     def predict_proba(self, X) -> np.ndarray:
         """
