@@ -4,6 +4,18 @@ This project is developed for the Advanced Machine Learning course at Warsaw Uni
 
 This repository includes a custom implementation of the **FISTA** (Fast Iterative Shrinkage-Thresholding Algorithm) for Logistic Regression with L1 regularization (Lasso) and methods for handling missing labels.
 
+# Code descripton 
+As it was proposed in the project assigment we used granular approach when writing the code for this project, so there is a description below where to find pieces of code coresponding to each task.
+
+## Task 1
+
+## Task 2
+
+## Task 3
+
+# How to run
+Make sure to have all the dependencies from requirements.txt installed. We reccomend using a venv. All the experiments code is in the main.ipynb.
+
 ## Authors
 * Anna Ostrowska
 * Gabriela Majstrak
