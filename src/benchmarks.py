@@ -1,4 +1,4 @@
-import numpy as np
+from fista import FISTA
 
 def train_naive_model(model, X, y_obs) -> "FISTA":
     """
