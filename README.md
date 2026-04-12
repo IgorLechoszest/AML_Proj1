@@ -53,9 +53,29 @@ Implemented datasets:
 pip install -r requirements.txt
 ```
 
-3. Run experiments in:
+3. Run experiments and visual comparisons in:
 
 `src/main.ipynb`
+
+4. Run tests:
+
+```bash
+python -m unittest discover -s tests -p "test_*.py"
+```
+
+## Reproducibility
+- Default random seed: `67`
+- Number of repeated train/test splits: configurable with `--runs` (default aligned with notebook examples)
+- Generated result files from script mode:
+	- `report/results_raw.csv`
+	- `report/results_summary.csv`
+	- `report/mcar_sweep_raw.csv`
+	- `report/mcar_sweep_summary.csv`
+- Main comparison visuals are provided in `src/main.ipynb`:
+	- mean F1 comparison by method and missingness mechanism,
+	- F1 gap-to-Oracle heatmap,
+	- MCAR sensitivity sweep over `c`,
+	- Custom FISTA vs sklearn L1 comparison.
 
 ## Authors
 * Anna Ostrowska
