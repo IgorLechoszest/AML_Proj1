@@ -1,51 +1,84 @@
-# Advanced Machine Learning, Project 1
+# Advanced Machine Learning - Project 1
 
-This project is developed for the Advanced Machine Learning course at Warsaw University of Technology (WUT MiNI). The aim of the project is to analyze a logistic regression model in a situation where the training dataset contains observations with missing labels. 
+This repository contains Project 1 for the Advanced Machine Learning course (WUT MiNI).
+The project studies binary logistic regression when training labels are partially missing.
 
-This repository includes a custom implementation of the **FISTA** (Fast Iterative Shrinkage-Thresholding Algorithm) for Logistic Regression with L1 regularization (Lasso) and methods for handling missing labels.
+The implementation includes:
+- custom Logistic Lasso trained with FISTA,
+- multiple missing-label mechanisms,
+- semi-supervised label completion methods,
+- benchmark comparisons and visual analysis in a notebook.
 
-# Code description
-The code is organized into focused modules for each project task.
+## Repository layout
 
-## Task 1
-- Data loading and preparation: `src/data_prep.py`
-- Missing-label generation mechanisms (MCAR, MAR1, MAR2, MNAR): `src/missingness.py`
-- Data preparation includes:
-	- numeric conversion,
-	- mean imputation,
-	- removal of highly collinear features using a correlation threshold.
+- `src/data_prep.py` - dataset loading and preprocessing.
+- `src/missingness.py` - MCAR, MAR1, MAR2, MNAR label-missingness generators.
+- `src/fista.py` - custom Logistic Lasso (FISTA) implementation.
+- `src/unlabeled.py` - `UnlabeledLogReg` with pseudo-labeling and EM.
+- `src/benchmarks.py` - Naive and Oracle training helpers.
+- `src/main.ipynb` - end-to-end experiments and plots.
+- `tests/` - unit and smoke tests.
 
-Implemented datasets:
-- Required real datasets (4):
-	- Spambase (OpenML)
-	- Sonar (OpenML)
-	- Breast Cancer Wisconsin (scikit-learn)
-	- Ionosphere (OpenML)
-- Additional synthetic dataset (optional, for stress testing/sanity checks):
-	- Artificial binary dataset
+## Task coverage
 
-## Task 2
-- Custom Logistic Lasso with FISTA: `src/fista.py`
-- Validation over lambda grid with selectable metric:
-	- recall,
-	- precision,
-	- F1,
-	- balanced accuracy,
-	- ROC AUC,
-	- PR AUC.
-- Visualization methods:
-	- `plot(measure)`
-	- `plot_coefficients()`
+### Task 1: data preparation and missingness schemes
 
-## Task 3
-- Semi-supervised model on partially labeled data: `src/unlabeled.py`
-- Baselines:
-	- Naive (`S=0` only),
-	- Oracle (`Y` fully observed),
-	- helpers in `src/benchmarks.py`.
-- End-to-end experiments and comparisons: `src/main.ipynb`
+Implemented real binary datasets:
+- Spambase (OpenML)
+- Sonar (OpenML)
+- Breast Cancer Wisconsin (scikit-learn)
+- Ionosphere (OpenML)
 
-# How to run
+Optional synthetic dataset:
+- Artificial binary dataset (for additional stress testing)
+
+Preprocessing pipeline:
+- numeric conversion,
+- mean imputation,
+- removal of highly collinear features (correlation threshold).
+
+Missing-label generators return `(X, y_obs)` with missing labels encoded as `-1`:
+- MCAR,
+- MAR1,
+- MAR2,
+- MNAR.
+
+### Task 2: custom logistic regression with FISTA
+
+Implemented in `src/fista.py`:
+- `fit(X_train, y_train)`
+- `validate(X_valid, y_valid, measure)`
+- `predict_proba(X_test)`
+- `predict(X_test)`
+- `plot(measure)`
+- `plot_coefficients()`
+
+Supported validation measures:
+- recall,
+- precision,
+- F1,
+- balanced accuracy,
+- ROC AUC,
+- PR AUC.
+
+### Task 3: learning with missing labels
+
+Implemented in `src/unlabeled.py`:
+- `UnlabeledLogReg(..., method="pseudo_labeling")`
+- `UnlabeledLogReg(..., method="em")`
+
+Baselines:
+- Naive (only observed labels),
+- Oracle (fully observed labels).
+
+Comparisons and analyses are run in `src/main.ipynb`:
+- methods under MCAR/MAR1/MAR2/MNAR,
+- MCAR sensitivity analysis across different `c` values,
+- custom FISTA vs sklearn L1 comparison,
+- prediction agreement and confusion-matrix diagnostics.
+
+## Setup and run
+
 1. Create and activate a virtual environment.
 2. Install dependencies:
 
@@ -53,7 +86,7 @@ Implemented datasets:
 pip install -r requirements.txt
 ```
 
-3. Run experiments and visual comparisons in:
+3. Open and run:
 
 `src/main.ipynb`
 
@@ -63,21 +96,24 @@ pip install -r requirements.txt
 python -m unittest discover -s tests -p "test_*.py"
 ```
 
-## Reproducibility
-- Default random seed: `67`
-- Number of repeated train/test splits: configurable with `--runs` (default aligned with notebook examples)
-- Generated result files from script mode:
-	- `report/results_raw.csv`
-	- `report/results_summary.csv`
-	- `report/mcar_sweep_raw.csv`
-	- `report/mcar_sweep_summary.csv`
-- Main comparison visuals are provided in `src/main.ipynb`:
-	- mean F1 comparison by method and missingness mechanism,
-	- F1 gap-to-Oracle heatmap,
-	- MCAR sensitivity sweep over `c`,
-	- Custom FISTA vs sklearn L1 comparison.
+## Running on custom data
+
+The notebook includes a helper function `run_on_custom_data(csv_path, target_column)`.
+
+Expected input:
+- CSV file with numeric features,
+- one binary target column (0/1) provided via `target_column`.
+
+The helper applies imputation + scaling and trains `UnlabeledLogReg`.
+
+## Reproducibility notes
+
+- Default seed used across core experiments: `67`.
+- Some sections use repeated random splits for averaged metrics.
+- Current workflow is notebook-driven (`src/main.ipynb`); there is no standalone CLI pipeline for automatic CSV export at this moment.
 
 ## Authors
-* Anna Ostrowska
-* Gabriela Majstrak
-* Igor Lechoszest
+
+- Anna Ostrowska
+- Gabriela Majstrak
+- Igor Lechoszest
