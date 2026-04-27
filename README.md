@@ -114,6 +114,6 @@ The helper applies imputation + scaling and trains `UnlabeledLogReg`.
 
 ## Authors
 
-- Anna Ostrowska
-- Gabriela Majstrak
-- Igor Lechoszest
+* [Anna Ostrowska](https://github.com/annaostrowska03)
+* [Gabriela Majstrak](https://github.com/GabrielaMajstrak)
+* [Igor Lechoszest](https://github.com/IgorLechoszest)
